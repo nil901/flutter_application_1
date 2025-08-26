@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "548843785853",
+    "project_id": "pawanputranotification",
+    "storage_bucket": "pawanputranotification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:548843785853:android:ad8ce5365ecba59142eb14",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAssPIT7RwaVfI0xFEAYlouIgb62QeeIXY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
