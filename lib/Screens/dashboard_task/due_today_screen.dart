@@ -42,7 +42,6 @@ Future<void> dueFollowUpsApi(
   try {
     int page = isRefresh ? 1 : ref.read(currentPageProvider);
 
-    // Build query parameters
     final queryParams = [
       "page=$page",
       if (search != null && search.trim().isNotEmpty)
@@ -115,11 +114,11 @@ class _DueTodayScreenState extends ConsumerState<DueTodayScreen> {
   @override
   void initState() {
     super.initState();
- Future.microtask(() => dueFollowUpsApi(ref, isRefresh: true));
+    Future.microtask(() => dueFollowUpsApi(ref, isRefresh: true));
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
     Future.microtask(() => dueFollowUpsApi(ref, isRefresh: true));
-        Future.microtask(() => scorceApi(ref,));
+    Future.microtask(() => scorceApi(ref));
   }
 
   void _scrollListener() {
@@ -129,9 +128,8 @@ class _DueTodayScreenState extends ConsumerState<DueTodayScreen> {
             _scrollController.position.maxScrollExtent - 100 &&
         !isLoading &&
         hasMore) {
-      Future.microtask(() =>  dueFollowUpsApi(ref,));
+      Future.microtask(() => dueFollowUpsApi(ref));
     }
-    
   }
 
   @override

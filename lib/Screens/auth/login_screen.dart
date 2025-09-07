@@ -40,8 +40,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginProvider);
     if (kDebugMode) {
-      emailController.text = "vikasgaidhani001@gmail.com";
-      passwordController.text = 'Test@321';
+      emailController.text = "gaidhanivikas001@gmail.com";
+      passwordController.text = 'pote@123';
       // emailController.text = "newpawanputragrop@gmail.com";
       // passwordController.text = '1234';
     }
@@ -72,7 +72,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Text('', style: TextStyle(color: kOrange, fontSize: 16)),
                     const SizedBox(height: 10),
                     Text(
-                      'Pawanputra App',
+                      'Diginet Solution',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,

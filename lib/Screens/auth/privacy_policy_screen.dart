@@ -89,7 +89,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                "If you have any questions about this Privacy Policy, please contact us at  amrutkarrakesh5006@gmail.com",
+                "If you have any questions about this Privacy Policy, please contact us at diginetsolution.info@gmail.com",
                 style: TextStyle(fontSize: 16),
               ),
             ],

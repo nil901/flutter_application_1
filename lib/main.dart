@@ -129,7 +129,7 @@ class MyApp extends StatelessWidget {
       locale: Locale(langCode),
       debugShowCheckedModeBanner: false,
       fallbackLocale: const Locale('en'),
-      title: 'Pawanputra',
+      title: 'Diginet Solution',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
       ),
