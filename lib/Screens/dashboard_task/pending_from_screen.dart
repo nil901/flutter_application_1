@@ -170,7 +170,7 @@ class _PendingFromScreenState extends ConsumerState<PendingFromScreen> {
                           // Info Rows
                           infoRow(Icons.person, "${widget.data.name}"),
                           infoRow(Icons.phone, "${widget.data.mobile}"),
-                         // infoRow(Icons.location_on, "${widget.data.address}"),
+                          // infoRow(Icons.location_on, "${widget.data.address}"),
                           infoRow(
                             Icons.calendar_today,
                             "${formatDate(widget.data.updatedAt.toString())}",
@@ -218,7 +218,7 @@ class _PendingFromScreenState extends ConsumerState<PendingFromScreen> {
                               child: Icon(Icons.call, color: kwhite, size: 18),
                             ),
                           ),
-                
+
                           SizedBox(width: 8),
                           InkWell(
                             onTap: () {
@@ -245,7 +245,7 @@ class _PendingFromScreenState extends ConsumerState<PendingFromScreen> {
                           ),
                         ],
                       ),
-                
+
                       ListView.builder(
                         itemCount: leadHistory.length,
                         physics: const NeverScrollableScrollPhysics(),
@@ -255,12 +255,16 @@ class _PendingFromScreenState extends ConsumerState<PendingFromScreen> {
                           return Align(
                             alignment: Alignment.center,
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 40),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                              ),
                               child: FollowUpTile(
-                                dateTime: item.createdAt.toString(), // ✅ Now it's a String
+                                dateTime:
+                                    item.createdAt
+                                        .toString(), // ✅ Now it's a String
                                 meetingDate: item.meetingDate.toString(),
                                 user: widget.data.name,
-                                status: item.status??0,
+                                status: item.status ?? 0,
                                 schedule: item.meetingTime,
                                 remark: item.remark ?? 'N/A',
                               ),
@@ -364,14 +368,16 @@ class FollowUpTile extends StatelessWidget {
       return 'Invalid date';
     }
   }
-String formatScheduleDate(String isoDate) {
-  try {
-    final dateTime = DateTime.parse(isoDate).toLocal(); // Converts to local timezone
-    return DateFormat('dd/MM/yyyy').format(dateTime);
-  } catch (e) {
-    return 'Invalid date';
+
+  String formatScheduleDate(String isoDate) {
+    try {
+      final dateTime =
+          DateTime.parse(isoDate).toLocal(); // Converts to local timezone
+      return DateFormat('dd/MM/yyyy').format(dateTime);
+    } catch (e) {
+      return 'Invalid date';
+    }
   }
-}
   // String get formattedSchedule => DateFormat('dd-MMM-yyyy hh:mm a').format(DateTime.parse(schedule));
 
   @override
@@ -499,7 +505,7 @@ Color getStatusColor(int? status) {
     case 3:
       return Colors.red; // No Requirement
     case 5:
-      return Colors.yellow; // Call Not Received
+      return Colors.pink; // Call Not Received
     default:
       return Colors.black; // Default color
   }
@@ -522,47 +528,48 @@ class OtherDetailsScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Column(
-        children: details.entries.map((entry) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                entry.key,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
+        children:
+            details.entries.map((entry) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      entry.value.isEmpty ? 'N/A' : entry.value,
-                      style: const TextStyle(fontSize: 15, color: Colors.black),
+                  Text(
+                    entry.key,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey,
+                      fontSize: 14,
                     ),
                   ),
-                 // if (entry.key == '${"description".tr}')
-                    // TextButton(
-                    //   onPressed: () {
-                    //     // Handle see more
-                    //   },
-                    //   child: Text(
-                    //     '${"see_more".tr}',
-                    //     style: const TextStyle(color: Colors.blue),
-                    //   ),
-                    // ),
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          entry.value.isEmpty ? 'N/A' : entry.value,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      // if (entry.key == '${"description".tr}')
+                      // TextButton(
+                      //   onPressed: () {
+                      //     // Handle see more
+                      //   },
+                      //   child: Text(
+                      //     '${"see_more".tr}',
+                      //     style: const TextStyle(color: Colors.blue),
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                  Divider(height: 20, color: Colors.grey[300]),
                 ],
-              ),
-              Divider(
-                height: 20,
-                color: Colors.grey[300],
-              ),
-            ],
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }

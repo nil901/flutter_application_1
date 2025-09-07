@@ -40,10 +40,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginProvider);
     if (kDebugMode) {
-      // emailController.text = "gaurijadhav@gmail.com";
-      // passwordController.text = '123';
-          emailController.text = "newpawanputragrop@gmail.com";
-          passwordController.text = '1234';
+      emailController.text = "vikasgaidhani001@gmail.com";
+      passwordController.text = 'Test@321';
+      // emailController.text = "newpawanputragrop@gmail.com";
+      // passwordController.text = '1234';
     }
 
     return WillPopScope(
@@ -187,7 +187,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               "password": passwordController.text,
                               "firebaseToken ": token,
                             };
-print(token);
+
                             // API Call
                             final response = await ApiService()
                                 .postRequest(loginEndPoint, {
@@ -196,7 +196,7 @@ print(token);
                                   "firebaseToken": token,
                                 });
 
-                           // print("Response: ${response?.statusCode}");
+                            // print("Response: ${response?.statusCode}");
                             if (response?.statusCode == 200) {
                               final token = response?.data['token'];
                               final user = response?.data['user'];

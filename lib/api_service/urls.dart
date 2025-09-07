@@ -26,6 +26,7 @@ String get createTask => '${baseUrl}task/createTask';
 String get deleteTask => '${baseUrl}task/deleteTask/';
 String get leadUpadteStatus => '${baseUrl}lead/updateLeadStatusAndMeetingDate/';
 String get getAllSorce => '${baseUrl}source/getAllSource';
+String get getAutoCallDashboardData => '${baseUrl}lead/getAutoCallDashboardData/';
 
 String get getPendingFollowUps =>
     '${baseUrl}dashboard/getPendingFollowupsByMember/${AppPreference().getInt(PreferencesKey.member_Id)}';

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:call_log/call_log.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application_1/Screens/auth/login_notifier.dart';
@@ -68,215 +69,278 @@ class StackDashboard extends ConsumerStatefulWidget {
   ConsumerState<StackDashboard> createState() => _StackDashboardState();
 }
 
-class _StackDashboardState extends ConsumerState<StackDashboard> {
-  bool isLoading = false;
+class _StackDashboardState extends ConsumerState<StackDashboard>
+    with WidgetsBindingObserver {
+  static const MethodChannel platform = MethodChannel(
+    'com.example.call_tracker',
+  );
 
-  // int todayFollowUps = 0;
-  // int pendingFollowUps = 0;
-  // int dueToday = 0;
-  // int tomorrowFollowUps = 0;
-  // int totalFollowUps = 0;
+  bool isLoading = false;
   bool isDialogOpen = false;
 
-  bool _isAppInitiatedCall = false;
-  @override
-  static const platform = MethodChannel('com.example.call_tracker');
+  bool _isAppInitiatedCall = false; // (तुझ्या logic साठी ठेवला)
+  bool _isIncomingCallRinging = false;
+  bool _appInForeground = true;
+  bool _handlerAttached = false;
 
   String _callStatus = '';
   String _incomingNumber = '';
   String _duration = '';
 
+  DateTime? _lastEndedHandledAt;
+
+  bool _didInitialLoad = false;
+
+  CancelToken? _dashCancel; // Dio cancel (optional)
+  bool _isFetchingDash = false; // guard
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => fetchDashboardCount(ref));
-    // fetchDashboardCount(ref);
+    WidgetsBinding.instance.addObserver(this);
 
-    _startCallTracking("00:00:00");
-
-    initializeCallHandler();
-  }
-
-  bool _isIncomingCallRinging = false;
-  void initializeCallHandler() {
-    platform.setMethodCallHandler((call) async {
-      switch (call.method) {
-        case 'onCallRinging':
-          final number = call.arguments['number'] ?? 'Unknown';
-          final direction = call.arguments['direction'] ?? 'unknown';
-          log("Incoming call ringing from: $number, direction: $direction");
-
-          setState(() {
-            _callStatus = '$number';
-            _incomingNumber = number;
-            _isIncomingCallRinging = true;
-          });
-          break;
-
-        case 'onCallStarted':
-          // Optionally reset or handle here
-          break;
-
-        case 'onCallEnded':
-          final number = call.arguments['number'] ?? 'Unknown';
-          final durationMillis = call.arguments['duration'] ?? 0;
-          // final direction = call.arguments['direction'] ?? 'unknown';
-
-          log("Call Arguments: ${call.arguments}");
-          log("isIncomingCallRinging: $_isIncomingCallRinging");
-
-          if (_isIncomingCallRinging) {
-            final callDurationSeconds = (durationMillis / 1000).round();
-
-            String formatDuration(int seconds) {
-              final duration = Duration(seconds: seconds);
-              String twoDigits(int n) => n.toString().padLeft(2, '0');
-              final hours = twoDigits(duration.inHours);
-              final minutes = twoDigits(duration.inMinutes.remainder(60));
-              final secs = twoDigits(duration.inSeconds.remainder(60));
-              return "$hours:$minutes:$secs";
-            }
-
-            final formattedDuration = formatDuration(callDurationSeconds);
-
-            // Show notification, call API etc.
-            try {
-              //  await _startCheckingCallLog(formattedDuration);
-              // await showCallEndedNotification(
-              //   _incomingNumber,
-              //   formattedDuration,
-              // );
-            } catch (e) {
-              print("Call log check failed: $e");
-            }
-
-            if (mounted) {
-              try {
-                final leadStatusResponse = await ApiService()
-                    .postRequest(getLeadStatus, {"mobile": _incomingNumber})
-                    .timeout(const Duration(seconds: 20));
-
-                final message = leadStatusResponse?.data["message"] as String?;
-                final leadData =
-                    leadStatusResponse?.data['lead'] as Map<String, dynamic>?;
-                final notifier = ref.read(getAllLedsStatusProvider.notifier);
-                notifier.state = [];
-
-                if (message == "LeadStatus fetched" && leadData != null) {
-                  final leadStatus = GetLeadStatusUpdateModel.fromJson(
-                    leadData,
-                  );
-                  notifier.state = [leadStatus];
-                  Utils().showToastMessage('Call from $number ended. $message');
-                } else {
-                  // Utils().showToastMessage(
-                  //   message ?? 'Failed to fetch lead status',
-                  // );
-                }
-              } catch (e) {
-                print("Lead Status Error: $e");
-                Utils().showToastMessage(
-                  "Lead status fetch failed: ${e.toString()}",
-                );
-              }
-
-              // _startCallTracking(formattedDuration);
-              _startCheckingCallLog(formattedDuration);
-              //     FlutterOverlayWindow.showOverlay(
-              //   alignment: OverlayAlignment.center,
-              //   height: 200,
-              //   width: 300,
-              //   enableDrag: true,
-              //   overlayTitle: "Call Popup",
-              //   overlayContent: "Call Ended",
-              //   flag: OverlayFlag.defaultFlag,
-              //   visibility: NotificationVisibility.visibilityPublic,
-
-              //   // entryPoint: 'overlayMain', // Important!
-              // );
-            }
-          } else {
-            print(
-              "Skipping outgoing call notification or not incoming ringing call.",
-            );
-          }
-
-          // // Reset the flag after call ended
-          // _isIncomingCallRinging = false;
-
-          break;
-
-        default:
-          print("Unhandled platform method: ${call.method}");
-          break;
+    // ✅ First frame नंतर safe call (context/providers ready)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_didInitialLoad) {
+        _didInitialLoad = true;
+        fetchDashboardCount(ref); // <-- only this
       }
     });
+
+    _startCallTracking("00:00:00");
+    _attachCallHandler();
   }
 
-  // static const platform = MethodChannel('com.example.calltracker/channel');
+  // ---- Lifecycle: foreground/background ----
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appInForeground = (state == AppLifecycleState.resumed);
+  }
 
+  // ---- Attach / Detach platform handler ----
+  void _attachCallHandler() {
+    if (_handlerAttached) return;
+    platform.setMethodCallHandler(_onPlatformCall);
+    _handlerAttached = true;
+  }
+
+  void _detachCallHandler() {
+    if (!_handlerAttached) return;
+    platform.setMethodCallHandler(null);
+    _handlerAttached = false;
+  }
+
+  // ---- Native invoke helpers ----
   Future<void> launchAppFromBackground() async {
     try {
       await platform.invokeMethod('launchAppFromBackground');
     } catch (e) {
-      print("Error launching app: $e");
+      log("Error launching app: $e");
     }
   }
 
-  Future<void> _startCallTracking(formattedDuration) async {
+  Future<void> _startCallTracking(String formattedDuration) async {
     try {
       final result = await platform.invokeMethod('startCallTracking');
-      if (!result) {
+      if (result != true) {
+        if (!mounted) return;
         setState(() {
           _callStatus = 'Permission denied or error starting call tracking';
-          print("sd,snfkdnfdkfn");
         });
       }
     } on PlatformException catch (e) {
+      if (!mounted) return;
       setState(() {
         _callStatus = 'Failed to start call tracking: ${e.message}';
       });
     }
   }
 
+  // ---- Platform callbacks (single source of truth) ----
+  Future<dynamic> _onPlatformCall(MethodCall call) async {
+    if (!mounted) return null;
+
+    switch (call.method) {
+      case 'onCallRinging':
+        {
+          final map = (call.arguments is Map) ? (call.arguments as Map) : {};
+          final number = (map['number'] as String?) ?? 'Unknown';
+          final direction = (map['direction'] as String?) ?? 'unknown';
+          log("Incoming call ringing from: $number, direction: $direction");
+
+          if (!mounted) return null;
+          setState(() {
+            _callStatus = number;
+            _incomingNumber = number;
+            _isIncomingCallRinging = true;
+          });
+          break;
+        }
+
+      case 'onCallStarted':
+        {
+          // optional
+          break;
+        }
+
+      case 'onCallEnded':
+        {
+          // ✅ duplicate ended debounce (1s)
+          final now = DateTime.now();
+          if (_lastEndedHandledAt != null &&
+              now.difference(_lastEndedHandledAt!).inMilliseconds < 1000) {
+            return null;
+          }
+          _lastEndedHandledAt = now;
+
+          final map = (call.arguments is Map) ? (call.arguments as Map) : {};
+          final number = (map['number'] as String?) ?? _incomingNumber;
+          final durationMillis = (map['duration'] as int?) ?? 0;
+
+          log("Call Arguments: $map");
+          log("isIncomingCallRinging: $_isIncomingCallRinging");
+
+          if (!_isIncomingCallRinging) {
+            // outgoing / unknown, UI skip
+            return null;
+          }
+
+          final secs = (durationMillis / 1000).round();
+          final formattedDuration = _formatHMS(secs);
+
+          // ---- Lead Status (safe) ----
+          try {
+            if (!mounted) return null;
+            final resp = await ApiService()
+                .postRequest(getLeadStatus, {"mobile": number})
+                .timeout(const Duration(seconds: 20));
+
+            if (!mounted) return null;
+            final message = resp?.data["message"] as String?;
+            final leadData = resp?.data['lead'] as Map<String, dynamic>?;
+
+            final notifier = ref.read(getAllLedsStatusProvider.notifier);
+            notifier.state = [];
+
+            if (message == "LeadStatus fetched" && leadData != null) {
+              notifier.state = [GetLeadStatusUpdateModel.fromJson(leadData)];
+              Utils().showToastMessage('Call from $number ended. $message');
+            }
+          } catch (e) {
+            if (mounted) {
+              Utils().showToastMessage("Lead status fetch failed: $e");
+            }
+          }
+
+          if (mounted) {
+            await _startCheckingCallLog(formattedDuration);
+          }
+
+          // reset ring flag
+          _isIncomingCallRinging = false;
+          break;
+        }
+
+      default:
+        log("Unhandled platform method: ${call.method}");
+    }
+    return null;
+  }
+
+  // ---- Helpers ----
+  String _formatHMS(int seconds) {
+    final d = Duration(seconds: seconds);
+    String two(int n) => n.toString().padLeft(2, '0');
+    return "${two(d.inHours)}:${two(d.inMinutes % 60)}:${two(d.inSeconds % 60)}";
+  }
+
   PhoneStateStatus status = PhoneStateStatus.NOTHING;
   Stream<PhoneStateStatus>? phoneStateStream;
 
-  Future<void> _startCheckingCallLog(duration) async {
+  Future<void> _startCheckingCallLog(String duration) async {
     final now = DateTime.now();
     final formattedDate = DateFormat(
       "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
     ).format(now);
+    log("Call ended at: $formattedDate, duration: $duration");
 
-    showCallPopup(context, duration);
+    // ✅ foreground असलं तरच popup
+    if (_appInForeground) {
+      _showCallPopupZeroAnim(duration);
+    } else {
+      // background असल्यास normal dialog टाकू नका; notification/overlay वापरा
+      // Utils().showLocalNotification(...)
+    }
   }
 
-  void showCallPopup(BuildContext context, String duration) {
+  // ---- FAST & SAFE POPUP (zero animation + context safety) ----
+  void _showCallPopupZeroAnim(String duration) {
+    if (!mounted) return;
     if (isDialogOpen) return;
     isDialogOpen = true;
-    _isIncomingCallRinging = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: kwhite,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: LedsFromCall(_incomingNumber, duration, duration, 0),
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        isDialogOpen = false;
+        return;
+      }
+
+      try {
+        await showGeneralDialog(
+          context: context,
+          // barrierDismissible: false,
+          barrierLabel: 'Call',
+          barrierColor: Colors.black45,
+          transitionDuration: Duration.zero, // ✅ no animation (fast)
+          pageBuilder: (_, __, ___) {
+            return Center(
+              child: Material(
+                color: kwhite,
+                borderRadius: BorderRadius.circular(16),
+                child: LedsFromCall(_incomingNumber, duration, duration, 0),
+              ),
+            );
+          },
         );
-      },
-    ).then((_) {
-      isDialogOpen = false;
+
+        if (!mounted) return;
+
+        // पहिला हलका dialog बंद करून actual heavy widget zero-anim ने
+        // Navigator.of(context, rootNavigator: true).pop();
+
+        if (!mounted) return;
+
+        await showGeneralDialog(
+          context: context,
+          // barrierDismissible: false,
+          barrierLabel: 'Call',
+          barrierColor: Colors.black45,
+          transitionDuration: Duration.zero, // ✅ zero-anim
+          pageBuilder: (_, __, ___) {
+            return Center(
+              child: Material(
+                color: kwhite,
+                borderRadius: BorderRadius.circular(16),
+                child: LedsFromCall(_incomingNumber, duration, duration, 0),
+              ),
+            );
+          },
+        );
+      } catch (e) {
+        log("Dialog show failed: $e");
+      } finally {
+        isDialogOpen = false;
+      }
     });
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
+  // ---- तुझं original method (नको असेल तर काढून टाक) ----
+  // void showCallPopup(BuildContext context, String duration) { ... }
+
+  // ---- Dummy: तुझं actual impl इथे ----
+  // Future<void> fetchDashboardCount(WidgetRef ref) async {
+  //   // your logic
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -707,17 +771,27 @@ class DialPadScreen extends ConsumerStatefulWidget {
 }
 
 class _DialPadScreenState extends ConsumerState<DialPadScreen> {
-  final EventChannel _callEventChannel = EventChannel(
+  final EventChannel _callEventChannel = const EventChannel(
     'com.example.crm_app/callEvents',
   );
+
   Timer? _timer;
+  Timer? _callLogTimer;
+  StreamSubscription<PhoneState?>? _phoneSub;
+
   int callSeconds = 0;
   bool isCalling = false;
-  bool _hasCallStarted = false;
-  bool _isCallEnded = false;
-  bool isDialogOpen = false;
+
+  bool _isAppInitiatedCall = false; // app मधून केलेल्या कॉलसाठीच popup
+  bool isDialogOpen = false; // re-entrancy gate
+  bool _popupShownForThisCall = false; // per-call single popup
+  DateTime? _lastEndedHandledAt; // duplicate ENDED debounce
+
   String enteredNumber = '';
   String _calledNumber = '';
+  String _callStatus = 'Status: Waiting for call...';
+  String _callDuration = '00:00:00';
+
   final List<String> buttons = [
     '1',
     '2',
@@ -733,60 +807,23 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
     '#',
   ];
 
-  String _callStatus = 'Status: Waiting for call...';
   @override
   void initState() {
-    enteredNumber = widget.mobile;
     super.initState();
+    enteredNumber = widget.mobile ?? '';
+
+    // तुझे init calls
     branchApi(ref);
     scorceApi(ref);
+
     requestPermission();
     _listenToPhoneState();
-    // listenToNativeCallEvents();
+    // listenToNativeCallEvents(); // वापरत असशील तर
   }
 
-  String _callDuration = '0';
-  bool _isAppInitiatedCall = false;
-
-  Timer? _callLogTimer;
-  Future<void> _makeCall() async {
-    setState(() {
-      _callDuration = '0';
-      _callStatus = 'Status: Waiting for call...';
-    });
-
-    if (enteredNumber.isNotEmpty) {
-      var status = await Permission.phone.request();
-      if (status.isGranted) {
-        _callLogTimer?.cancel();
-
-        _isAppInitiatedCall = true; // ✅ flag set
-
-        await FlutterPhoneDirectCaller.callNumber(enteredNumber);
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Permission denied')));
-      }
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Enter a number')));
-    }
-  }
-
-  PhoneStateStatus status = PhoneStateStatus.NOTHING;
-  Stream<PhoneStateStatus>? phoneStateStream;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-
-  // }
-
+  // -------- Permissions --------
   Future<bool> requestPermission() async {
-    var status = await Permission.phone.request();
-
+    final status = await Permission.phone.request();
     return switch (status) {
       PermissionStatus.denied ||
       PermissionStatus.restricted ||
@@ -796,255 +833,231 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
     };
   }
 
-  void _listenToPhoneState() async {
-    PhoneState.stream.listen((PhoneState? event) async {
+  // -------- Dial / Make Call --------
+  Future<void> _makeCall() async {
+    setState(() {
+      _callDuration = '00:00:00';
+      _callStatus = 'Status: Waiting for call...';
+      callSeconds = 0;
+      _popupShownForThisCall = false; // reset per call
+    });
+
+    if (enteredNumber.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a number')));
+      return;
+    }
+
+    final granted = await requestPermission();
+    if (!granted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Permission denied')));
+      return;
+    }
+
+    _callLogTimer?.cancel();
+    _isAppInitiatedCall = true; // ✅ app-initiated
+
+    await FlutterPhoneDirectCaller.callNumber(enteredNumber);
+  }
+
+  // -------- Phone state stream --------
+  void _listenToPhoneState() {
+    _phoneSub?.cancel();
+    _phoneSub = PhoneState.stream.listen((PhoneState? event) async {
       if (event == null) return;
 
       if (event.status == PhoneStateStatus.CALL_STARTED) {
-        print(' Call Started');
-      } else if (event.status == PhoneStateStatus.CALL_INCOMING) {
-        print(' Call In Progress');
-        setState(() {
-          isCalling = true;
-          _callDuration = '0';
-          _callStatus = 'Status: Call in progress...';
-        });
-        String formatDuration(Duration duration) {
-          String twoDigits(int n) => n.toString().padLeft(2, '0');
-          final hours = twoDigits(duration.inHours);
-          final minutes = twoDigits(duration.inMinutes.remainder(60));
-          final seconds = twoDigits(duration.inSeconds.remainder(60));
-          return "$hours:$minutes:$seconds";
-        }
-
+        // timer सुरू
         _timer?.cancel();
-        _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted) return;
           setState(() {
             callSeconds++;
-            final duration = Duration(seconds: callSeconds);
-            _callDuration = formatDuration(duration);
+            _callDuration = _formatHMS(callSeconds);
           });
         });
-        print("Call started ${_callDuration}");
+        if (mounted) {
+          setState(() {
+            isCalling = true;
+            _callStatus = 'Status: Call in progress...';
+            // नवीन कॉल
+            _popupShownForThisCall = false;
+          });
+        }
+      } else if (event.status == PhoneStateStatus.CALL_INCOMING) {
+        // heavy काही करू नये; फक्त log
+        // print('Incoming...');
       } else if (event.status == PhoneStateStatus.CALL_ENDED) {
-        print('Call Ended');
+        // duplicate ENDED debounce (~1.2s)
+        final now = DateTime.now();
+        if (_lastEndedHandledAt != null &&
+            now.difference(_lastEndedHandledAt!).inMilliseconds < 1200) {
+          return;
+        }
+        _lastEndedHandledAt = now;
 
+        _timer?.cancel();
+        _timer = null;
+
+        // Lead Status (safe)
         try {
-          /// Lead Status API
           final leadStatusResponse = await ApiService()
-              .postRequest(getLeadStatus, {
-                "mobile": enteredNumber.replaceAll(' ', ''),
-              })
-              .timeout(
-                const Duration(seconds: 20),
-                onTimeout: () {
-                  throw TimeoutException("Lead status API timed out");
-                },
-              );
-
+              .postRequest(getLeadStatus, {"mobile": _normalize(enteredNumber)})
+              .timeout(const Duration(seconds: 20));
           final message = leadStatusResponse?.data["message"] as String?;
           final leadData =
               leadStatusResponse?.data['lead'] as Map<String, dynamic>?;
-
           final notifier = ref.read(getAllLedsStatusProvider.notifier);
           notifier.state = [];
-
           if (message == "LeadStatus fetched" && leadData != null) {
-            final leadStatus = GetLeadStatusUpdateModel.fromJson(leadData);
-            notifier.state = [leadStatus];
-            // Utils().showToastMessage(message ?? 'Lead Status Updated');
+            notifier.state = [GetLeadStatusUpdateModel.fromJson(leadData)];
           } else {
             Utils().showToastMessage(message ?? 'Failed to fetch lead status');
           }
         } catch (e) {
-          print("Lead Status Error: $e");
-          //Utils().showToastMessage("Lead status fetch failed: ${e.toString()}");
+          // swallow
         }
 
-        await _startCheckingCallLog();
+        // call log retry + popup
+        await _startCheckingCallLogWithRetry();
 
-        // Hide loading if used
-        // setState(() => isLoading = false);
+        if (mounted) {
+          setState(() {
+            isCalling = false;
+          });
+        }
       }
     });
   }
 
-  void _onCallEnded() {
-    // Call झाल्यावर काय करायचं ते इथे लिहा
-    print("✅ Call Ended - API hitting...");
-    // Example: तू API call करू शकतोस किंवा Popup वगैरे दाखवू शकतोस
-    // ApiService.instance.hitYourApi();
-  }
+  // -------- CallLog retry + popup --------
+  Future<void> _startCheckingCallLogWithRetry() async {
+    if (!_isAppInitiatedCall) {
+      // external call; popup नको
+      return;
+    }
+    if (_popupShownForThisCall) return;
 
-  Future<void> _startCheckingCallLog() async {
-    _callLogTimer?.cancel();
-    _callLogTimer = null;
+    const tries = 4;
+    for (int i = 0; i < tries; i++) {
+      final entry = await _findLatestMatchingEntry(
+        dialed: _normalize(enteredNumber),
+      );
+      if (entry != null) {
+        final secs = (entry.duration ?? 0).toInt();
+        final formatted = _formatHMS(secs);
+        _showCallPopupSafe(durationSeconds: secs, formatted: formatted);
 
-    // if (!mounted) return;
-    // setState(() {
-    //   _callStatus = 'Status: Checking Call Log...';
-    // });
+        _isAppInitiatedCall = false;
+        _popupShownForThisCall = true;
 
-    Iterable<CallLogEntry> entries = await CallLog.get();
-
-    String formatDuration(int seconds) {
-      final duration = Duration(seconds: seconds);
-      String twoDigits(int n) => n.toString().padLeft(2, '0');
-      final hours = twoDigits(duration.inHours);
-      final minutes = twoDigits(duration.inMinutes.remainder(60));
-      final secs = twoDigits(duration.inSeconds.remainder(60));
-      return "$hours:$minutes:$secs";
+        if (mounted) {
+          setState(() {
+            _callDuration = formatted;
+            _callStatus = 'Status: Call Ended';
+          });
+        }
+        return;
+      }
+      await Future.delayed(const Duration(milliseconds: 400));
     }
 
-    if (entries.isNotEmpty) {
-      for (var entry in entries) {
-        if (entry.number == enteredNumber) {
-          final formattedDuration = formatDuration(entry.duration!.toInt());
+    // fallback — आपल्या timer वरून duration
+    final fallback = _formatHMS(callSeconds);
+    _showCallPopupSafe(durationSeconds: callSeconds, formatted: fallback);
+    _isAppInitiatedCall = false;
+    _popupShownForThisCall = true;
 
-          if (!mounted) return;
-          // setState(() {
-          //   _callDuration = formattedDuration;
-          // });
+    if (mounted) {
+      setState(() {
+        _callDuration = fallback;
+        _callStatus = 'Status: Call Ended';
+      });
+    }
+  }
 
-          final now = DateTime.now();
-          final formatted = DateFormat(
-            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-          ).format(now);
-
-          if (!_isAppInitiatedCall) {
-            print("External call ended — API call skipped.");
-            return;
-          }
-
-          _isAppInitiatedCall = false;
-
-          final memberId = AppPreference().getInt(PreferencesKey.member_Id);
-
-          // try {
-          //   final callHistoryResponse = await ApiService()
-          //       .postRequest(createCallHistory, {
-          //         "memberId": memberId,
-          //         "caller":
-          //             "${AppPreference().getString(PreferencesKey.mobile_no)}",
-          //         "reciever": enteredNumber.replaceAll(' ', ''),
-          //         "duration": formattedDuration,
-          //         "date": formatted,
-          //         'status': 1,
-          //         'name': "",
-          //       })
-          //       .timeout(
-          //         const Duration(seconds: 20),
-          //         onTimeout: () {
-          //           throw TimeoutException("Call history API timed out");
-          //         },
-          //       );
-
-          //   if (!mounted) return;
-          //   // Utils().showToastMessage(
-          //   //   callHistoryResponse?.data['message'] ??
-          //   //       'Call History Added/Failed',
-          //   // );
-          // } catch (e) {
-          //   print("Call History Error: $e");
-          //   if (mounted) {
-          //     Utils().showToastMessage(
-          //       "Call history save failed: ${e.toString()}",
-          //     );
-          //   }
-          // }
-
-          if (mounted) {
-            showCallPopup(context, entry.duration ?? 0, formattedDuration);
-          }
-
-          if ((entry.duration ?? 0) > 0) {
-            if (!mounted) return;
-            setState(() {
-              _callDuration = formattedDuration;
-              _callStatus = 'Status: Call Ended';
-            });
-            _callLogTimer?.cancel();
-            _callLogTimer = null;
-          } else {
-            print("📟 Call duration is 0, but popup shown.");
-          }
-
-          return;
+  Future<CallLogEntry?> _findLatestMatchingEntry({
+    required String dialed,
+  }) async {
+    try {
+      final entries = await CallLog.get();
+      for (final e in entries) {
+        final numStr = _normalize(e.number ?? '');
+        if (numStr.isEmpty) continue;
+        if (numStr.endsWith(dialed) || dialed.endsWith(numStr)) {
+          return e;
         }
       }
-    }
+    } catch (_) {}
+    return null;
   }
 
-  @override
-  void dispose() {
-    _callLogTimer?.cancel();
-    super.dispose();
-  }
+  // -------- Popup (crash-safe + zero-anim) --------
+  void _showCallPopupSafe({
+    required int durationSeconds,
+    required String formatted,
+  }) {
+    if (!mounted) return;
+    if (isDialogOpen) return;
+    isDialogOpen = true;
 
-  void showCallPopup(BuildContext context, duration, formatduration) {
-    /// _startCheckingCallLog();
-    // if (isDialogOpen) return; // If dialog is already open, do nothing
-    showDialog(
-      context: context,
-
-      barrierDismissible: false, // Dialog बाहेर click केल्यावर बंद होणार नाही
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: kwhite,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: LedsFromCall(enteredNumber, duration, formatduration, 1),
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        isDialogOpen = false;
+        return;
+      }
+      try {
+        await showGeneralDialog(
+          context: context,
+          barrierDismissible: false,
+          barrierLabel: 'Call',
+          barrierColor: Colors.black45,
+          transitionDuration: Duration.zero, // low-end devices: fast
+          pageBuilder: (_, __, ___) {
+            return Center(
+              child: Material(
+                color: kwhite,
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  width: 320,
+                  child: LedsFromCall(
+                    _normalize(enteredNumber),
+                    durationSeconds,
+                    formatted,
+                    1,
+                  ),
+                ),
+              ),
+            );
+          },
         );
-      },
-    );
+      } catch (e) {
+        log("Dialog show failed: $e");
+      } finally {
+        isDialogOpen = false;
+      }
+    });
   }
 
-  BranchModel? selectedBranch;
-  SourceModel? selectedSorce;
-  String? selectLower;
-  String? selectStatus;
-  String? materialType;
-  TextEditingController contactNameController = TextEditingController();
-  TextEditingController companyNameController = TextEditingController();
-  TextEditingController companydetailsNameController = TextEditingController();
-  TextEditingController referanceController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
-  TextEditingController enterFacebookCompaignController =
-      TextEditingController();
-
-  Widget _buildDropdown(String hint) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: DropdownButtonFormField<String>(
-        decoration: InputDecoration(
-          hintText: hint,
-          border: OutlineInputBorder(),
-        ),
-        items: [],
-        onChanged: (value) {},
-      ),
-    );
+  // -------- Helpers --------
+  String _normalize(String s) {
+    final t = s.replaceAll(RegExp(r'[\s\-()]'), '');
+    return t.startsWith('+91') ? t.substring(3) : t;
   }
 
-  Widget _buildTextField(String hint, {int maxLines = 1}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextFormField(
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          hintText: hint,
-          border: OutlineInputBorder(),
-        ),
-      ),
-    );
+  String _formatHMS(int seconds) {
+    final d = Duration(seconds: seconds);
+    String two(int n) => n.toString().padLeft(2, '0');
+    return "${two(d.inHours)}:${two(d.inMinutes % 60)}:${two(d.inSeconds % 60)}";
   }
 
+  // -------- UI helpers (तुझ्या existing UI प्रमाणेच) --------
   void addNumber(String number) {
     if (!isCalling) {
-      setState(() {
-        enteredNumber += number;
-      });
+      setState(() => enteredNumber += number);
     }
   }
 
@@ -1056,24 +1069,32 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
     }
   }
 
+  Future<void> pasteFromClipboard() async {
+    final data = await Clipboard.getData('text/plain');
+    if (data?.text != null) {
+      setState(() => enteredNumber = data!.text!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Number pasted from clipboard')),
+      );
+    }
+  }
+
+ 
   Future<void> _startCall() async {
-    String number = enteredNumber;
+    final number = enteredNumber.trim();
     if (number.isNotEmpty) {
       _calledNumber = number;
-
       final permission = await Permission.contacts.request();
       if (permission.isGranted) {
-        // Optional: Get contact name
+        // Optional: contact name fetch
       }
-
       await FlutterPhoneDirectCaller.callNumber(number);
     }
   }
 
   void endCall() {
     _timer?.cancel();
-    int duration = callSeconds;
-
+    final duration = callSeconds;
     setState(() {
       isCalling = false;
       callSeconds = 0;
@@ -1081,9 +1102,7 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
 
     if (!isDialogOpen && mounted) {
       isDialogOpen = true;
-
       final TextEditingController feedbackController = TextEditingController();
-
       showDialog(
         context: context,
         builder: (context) {
@@ -1117,16 +1136,12 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
     }
   }
 
-  Future<void> pasteFromClipboard() async {
-    ClipboardData? clipboardData = await Clipboard.getData('text/plain');
-    if (clipboardData != null && clipboardData.text != null) {
-      setState(() {
-        enteredNumber = clipboardData.text!;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Number pasted from clipboard')),
-      );
-    }
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _callLogTimer?.cancel();
+    _phoneSub?.cancel();
+    super.dispose();
   }
 
   @override

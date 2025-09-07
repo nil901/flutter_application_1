@@ -64,7 +64,7 @@ class _TotalLeadUpdateFromsScreenState
   final TextEditingController meetingDescController = TextEditingController();
   final TextEditingController fbCampaignController = TextEditingController();
   final TextEditingController estimatedBudgetController =
-    TextEditingController();
+      TextEditingController();
   bool isSourceSet = false;
   bool isLocationSet = false;
   bool isbranchSet = false;
@@ -77,7 +77,7 @@ class _TotalLeadUpdateFromsScreenState
 
     print("Widget Data: ${widget.data}");
     scorceApi(ref);
-      getAllLocationApi(ref);
+    getAllLocationApi(ref);
     branchApi(ref); // fetch branches
 
     //  final sorceList = ref.read(scorceProvider);
@@ -120,7 +120,7 @@ class _TotalLeadUpdateFromsScreenState
       fbCampaignController.text = widget.data.fbCampaignName ?? "";
       estimatedBudgetController.text =
           widget.data.estimatedBudget?.toString() ?? "";
-     
+
       // selectedSorce = matchedSorce;
     });
 
@@ -583,143 +583,146 @@ class _TotalLeadUpdateFromsScreenState
               borderColor: Colors.black,
             ),
 
-              HintTextCustom(text: "meeting_date".tr),
-        
-              CommonTextField(
-  controller: meetingDateController,
-  label: "meeting_date".tr,
-  inputType: TextInputType.none,
-  readOnly: true,
-  onTap: () async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
+            HintTextCustom(text: "meeting_date".tr),
 
-    if (pickedDate != null) {
-      final now = DateTime.now();
-      final fullDateTime = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        now.hour,
-        now.minute,
-        now.second,
-        now.millisecond,
-      );
+            CommonTextField(
+              controller: meetingDateController,
+              label: "meeting_date".tr,
+              inputType: TextInputType.none,
+              readOnly: true,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
 
-      final formattedDateForDisplay = DateFormat("dd/MM/yyyy").format(fullDateTime);
-      final formattedDateForBackend = DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(fullDateTime.toUtc());
+                if (pickedDate != null) {
+                  final now = DateTime.now();
+                  final fullDateTime = DateTime(
+                    pickedDate.year,
+                    pickedDate.month,
+                    pickedDate.day,
+                    now.hour,
+                    now.minute,
+                    now.second,
+                    now.millisecond,
+                  );
 
-      setState(() {
-        prevMeetingDate = formattedDateForBackendGlobal;
-        meetingDateController.text = formattedDateForDisplay;
-        formattedDateForBackendGlobal = formattedDateForBackend;
+                  final formattedDateForDisplay = DateFormat(
+                    "dd/MM/yyyy",
+                  ).format(fullDateTime);
+                  final formattedDateForBackend = DateFormat(
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                  ).format(fullDateTime.toUtc());
 
-      
-      });
+                  setState(() {
+                    prevMeetingDate = formattedDateForBackendGlobal;
+                    meetingDateController.text = formattedDateForDisplay;
+                    formattedDateForBackendGlobal = formattedDateForBackend;
+                  });
 
-      print("Frontend Display Date: $formattedDateForDisplay");
-      print("Backend Date: $formattedDateForBackendGlobal");
-    }
-  },
-),
+                  print("Frontend Display Date: $formattedDateForDisplay");
+                  print("Backend Date: $formattedDateForBackendGlobal");
+                }
+              },
+            ),
 
+            HintTextCustom(text: "meeting_time".tr),
 
-           
-              HintTextCustom(text: "meeting_time".tr),
-          
-              CommonTextField(
-  controller: meetingTimeController,
-  label: "meeting_time".tr,
-  inputType: TextInputType.none,
-  readOnly: true,
-  onTap: () async {
-    TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
+            CommonTextField(
+              controller: meetingTimeController,
+              label: "meeting_time".tr,
+              inputType: TextInputType.none,
+              readOnly: true,
+              onTap: () async {
+                TimeOfDay? pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
 
-    if (pickedTime != null) {
-      final now = DateTime.now();
-      final fullTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
+                if (pickedTime != null) {
+                  final now = DateTime.now();
+                  final fullTime = DateTime(
+                    now.year,
+                    now.month,
+                    now.day,
+                    pickedTime.hour,
+                    pickedTime.minute,
+                  );
 
-      final formattedTimeForDisplay = DateFormat("hh:mm a").format(fullTime); // e.g. 04:30 PM
-      final formattedTimeForBackend = DateFormat("HH:mm:ss").format(fullTime); // e.g. 16:30:00
+                  final formattedTimeForDisplay = DateFormat(
+                    "hh:mm a",
+                  ).format(fullTime); // e.g. 04:30 PM
+                  final formattedTimeForBackend = DateFormat(
+                    "HH:mm:ss",
+                  ).format(fullTime); // e.g. 16:30:00
 
-      setState(() {
-        meetingTimeController.text = formattedTimeForDisplay;
-       // formattedMeetingTimeBackendGlobal = formattedTimeForBackend;
-// print("ksjdksjdksd"+   meetingTimeController.text);
-        // Optional: isUpdated logic if time matters
-      
-      });
+                  setState(() {
+                    meetingTimeController.text = formattedTimeForDisplay;
+                    // formattedMeetingTimeBackendGlobal = formattedTimeForBackend;
+                    // print("ksjdksjdksd"+   meetingTimeController.text);
+                    // Optional: isUpdated logic if time matters
+                  });
 
-      print("Frontend Time: $formattedTimeForDisplay");
-      print("Backend Time: $formattedTimeForBackend");
-    }
-  },
-),
-          
-              HintTextCustom(text: "location".tr),
-           
-              Consumer(
-                builder: (context, ref, child) {
-                  final locationList = ref.watch(locationProvider);
+                  print("Frontend Time: $formattedTimeForDisplay");
+                  print("Backend Time: $formattedTimeForBackend");
+                }
+              },
+            ),
 
-                  // Get the location string from widget.data safely
-                  final sourceFromData =
-                      widget.data.location?.toString().trim() ?? '';
+            HintTextCustom(text: "location".tr),
 
-                  // Only try to set location if it hasn't been set and valid data exists
-                  if (!isLocationSet &&
-                      sourceFromData.isNotEmpty &&
-                      locationList.isNotEmpty) {
-                    // Try to match the location from the list
-                    final match = locationList.firstWhere(
-                      (element) => element.name == sourceFromData,
-                      orElse:
-                          () => LocationModel(id: '', name: '', locationId: 0),
-                    );
+            Consumer(
+              builder: (context, ref, child) {
+                final locationList = ref.watch(locationProvider);
 
-                    print("Matched Source: ${match.name}");
+                // Get the location string from widget.data safely
+                final sourceFromData =
+                    widget.data.location?.toString().trim() ?? '';
 
-                    // If a match is found, set the selected location
-                    if (match.id.isNotEmpty) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          setState(() {
-                            selectedLocation = match;
-                            isLocationSet = true;
-                          });
-                        }
-                      });
-                    }
-                  }
+                // Only try to set location if it hasn't been set and valid data exists
+                if (!isLocationSet &&
+                    sourceFromData.isNotEmpty &&
+                    locationList.isNotEmpty) {
+                  // Try to match the location from the list
+                  final match = locationList.firstWhere(
+                    (element) => element.name == sourceFromData,
+                    orElse:
+                        () => LocationModel(id: '', name: '', locationId: 0),
+                  );
 
-                  return CommonDropdown<LocationModel>(
-                    hint: "select_location".tr,
-                    value: selectedLocation,
-                    items: locationList,
-                    getLabel: (item) => item.name,
-                    onChanged: (value) {
-                      if (value != null) {
+                  print("Matched Source: ${match.name}");
+
+                  // If a match is found, set the selected location
+                  if (match.id.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
                         setState(() {
-                          selectedLocation = value;
+                          selectedLocation = match;
+                          isLocationSet = true;
                         });
                       }
-                    },
-                  );
-                },
-              ),
+                    });
+                  }
+                }
+
+                return CommonDropdown<LocationModel>(
+                  hint: "select_location".tr,
+                  value: selectedLocation,
+                  items: locationList,
+                  getLabel: (item) => item.name,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        selectedLocation = value;
+                      });
+                    }
+                  },
+                );
+              },
+            ),
             HintTextCustom(text: "meeting_description".tr),
             CommonTextField(
               controller: meetingDescController,
@@ -796,9 +799,9 @@ class _TotalLeadUpdateFromsScreenState
                       "mobile": mobileController.text,
                       "source": selectedSorce?.name,
                       "website": websiteController.text,
-                      "createdBy": AppPreference().getInt(
-                        PreferencesKey.member_Id,
-                      ),
+                      // "createdBy": AppPreference().getInt(
+                      //   PreferencesKey.member_Id,
+                      // ),
                       "position": positionController.text,
                       "industry": industryController.text,
                       "fbProfile": fbProfileController.text,
@@ -824,7 +827,7 @@ class _TotalLeadUpdateFromsScreenState
                       "fbCampaignName": fbCampaignController.text,
                       "isDeleted": false,
                       "estimatedBudget": estimatedBudgetController.text,
-                     // "isStatusUpdated": true,
+                      // "isStatusUpdated": true,
                     },
                   );
 
@@ -834,58 +837,64 @@ class _TotalLeadUpdateFromsScreenState
 
                   if (response?.statusCode == 200) {
                     final responseData = response!.data;
- try {
-      // Filter values
-      // final name = _searchController.text.trim();
-      // final sourceParam = selectedSorce?.name ?? '';
-      // final from =
-      //     fromDate != null ? DateFormat('yyyy-MM-dd').format(fromDate!) : '';
-      // final to = toDate != null ? DateFormat('yyyy-MM-dd').format(toDate!) : '';
+                    try {
+                      // Filter values
+                      // final name = _searchController.text.trim();
+                      // final sourceParam = selectedSorce?.name ?? '';
+                      // final from =
+                      //     fromDate != null ? DateFormat('yyyy-MM-dd').format(fromDate!) : '';
+                      // final to = toDate != null ? DateFormat('yyyy-MM-dd').format(toDate!) : '';
 
-      // Query string
-      final queryParams = [
-        "page=1",
-       "name=",
-       "source=",
-         "fromDate=",
-        "toDate=",
-      ].join("&");
+                      // Query string
+                      final queryParams = [
+                        "page=1",
+                        "name=",
+                        "source=",
+                        "fromDate=",
+                        "toDate=",
+                      ].join("&");
 
-      // API Call
-      final response = await ApiService().getRequest(
-        "${getAllLead}$queryParams",
-      );
+                      // API Call
+                      final response = await ApiService().getRequest(
+                        "${getAllLead}$queryParams",
+                      );
 
-      if (response?.statusCode == 200) {
-        final data = response?.data['leads'] as List;
-        final newLeads =
-            data.map((json) => GetLedsByHistoryModel.fromJson(json)).toList();
+                      if (response?.statusCode == 200) {
+                        final data = response?.data['leads'] as List;
+                        final newLeads =
+                            data
+                                .map(
+                                  (json) =>
+                                      GetLedsByHistoryModel.fromJson(json),
+                                )
+                                .toList();
 
-        final currentLeads = ref.read(getAllLedsProvider);
-        if (1 == 1) {
-          ref.read(getAllLedsProvider.notifier).state = newLeads;
-        } else {
-          ref.read(getAllLedsProvider.notifier).state = [
-            ...currentLeads,
-            ...newLeads,
-          ];
-        }
+                        final currentLeads = ref.read(getAllLedsProvider);
+                        if (1 == 1) {
+                          ref.read(getAllLedsProvider.notifier).state =
+                              newLeads;
+                        } else {
+                          ref.read(getAllLedsProvider.notifier).state = [
+                            ...currentLeads,
+                            ...newLeads,
+                          ];
+                        }
 
-        if (newLeads.isEmpty) {
-        //  hasMoreData = false;
-        }
-      }
-    } catch (e) {
-      print("Error: $e");
-    } finally {
-    //  ref.read(isLoadingProvider.notifier).state = false;
-    }
+                        if (newLeads.isEmpty) {
+                          //  hasMoreData = false;
+                        }
+                      }
+                    } catch (e) {
+                      print("Error: $e");
+                    } finally {
+                      //  ref.read(isLoadingProvider.notifier).state = false;
+                    }
                     // state = const AsyncValue.data(null);
                     Utils().showToastMessage(
                       response.data['message'] ?? 'update_scucessfully'.tr,
                     );
                     dueFollowUpsApi(ref);
-                   
+
                     pendingFollowUpsApi(ref);
                     // TodayFollowupsScreenAPi(ref,1);
                     twoMarrowFollowUpsApi(ref);

@@ -182,13 +182,8 @@ Future<void> getAllLedsApi(WidgetRef ref) async {
   log("----------------------------${getAllLeds}");
   try {
     final response = await ApiService().getRequest(getAllLeds);
-
-    // print(response?.data['leads']);
     if (response != null && response.statusCode == 200) {
       final data = response.data['leads'] as List;
-
-      // log(" lead data$data");
-
       ref.read(getPendingFollowUprovider.notifier).state =
           data.map((json) => GetPendingFollowsByMember.fromJson(json)).toList();
     } else {}
@@ -199,7 +194,6 @@ Future<void> getAllLedsApi(WidgetRef ref) async {
 }
 
 Future<void> branchApi(WidgetRef ref) async {
-  // print("helowwckxckdnkdfn");
   try {
     final response = await ApiService().getRequest(getAllBranch);
     print(response?.data['data']);
