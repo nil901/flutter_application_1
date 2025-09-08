@@ -271,7 +271,7 @@ class _TotalLeadFromScreenState extends ConsumerState<TotalLeadFromScreen> {
                               meetingDate: item.meetingDate.toString(),
                               user: widget.data.name.toString(),
                               status: item.status ??0,
-                              schedule: item.meetingTime,
+                              schedule: item.meetingDate.toString(),
                               remark: item.remark ?? 'N/A',
                             ),
                           ),

@@ -269,11 +269,11 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
 
   DateTime? selectedDateTime;
   Map<String, int> statusPriorityMap = {
-    'Mid': 1,
+    'Hot ': 1,
     // 'Call Back': 2,
-    'Lower': 0,
-    'Important': 2,
-    'High Prority and Urgent': 3,
+    'Warm ': 0,
+    'Cold ': 2,
+    // 'High Prority and Urgent': 3,
   };
   Map<String, int> statusIdMap = {
     'Interested': 1,
@@ -724,7 +724,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
                   "twitterProfile": twitterProfileController.text,
                   "state": stateController.text,
                   "city": cityController.text,
-                  "comment": commentController.text,
+                  "comment": meetingDescController.text,
                   "address": addressController1.text,
                   "reference": referenceController.text,
                   "branch": selectedBranch?.name,
@@ -741,7 +741,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
                   "description": "Nothing",
                   "fbCampaignName": fbCampaignController.text,
                   "isDeleted": false,
-                  //"remark": meetingDescController.text,
+                "remark": meetingDescController.text,
                   "estimatedBudget": estimatedBudgetController.text,
                   "flatType": selectedRemark,
                   "location": selectedLocation?.name,
@@ -773,7 +773,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
                     "reference": referenceController.text,
                     "branch": selectedBranch?.name,
                     "prority": priorityId,
-                    //  "remark": meetingDescController.text,
+                    "remark": meetingDescController.text,
                     "status": statusId,
                     "conversionStatus": conversionStatusId,
                     "contactDate": contactDate,
