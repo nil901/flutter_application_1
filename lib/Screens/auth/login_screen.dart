@@ -187,8 +187,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               "password": passwordController.text,
                               "firebaseToken ": token,
                             };
-
-                            // API Call
                             final response = await ApiService()
                                 .postRequest(loginEndPoint, {
                                   "email": emailController.text,

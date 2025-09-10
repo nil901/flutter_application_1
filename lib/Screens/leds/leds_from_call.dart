@@ -269,11 +269,10 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
 
   DateTime? selectedDateTime;
   Map<String, int> statusPriorityMap = {
-    'Mid': 1,
+    'Hot': 1,
     // 'Call Back': 2,
-    'Lower': 0,
-    'Important': 2,
-    'High Prority and Urgent': 3,
+    'Warm': 0,
+    'Cold': 2,
   };
   Map<String, int> statusIdMap = {
     'Interested': 1,

@@ -286,42 +286,82 @@ class _StackDashboardState extends ConsumerState<StackDashboard>
       }
 
       try {
-        await showGeneralDialog(
+                await showGeneralDialog(
           context: context,
-          // barrierDismissible: false,
+          barrierDismissible: false,
           barrierLabel: 'Call',
           barrierColor: Colors.black45,
-          transitionDuration: Duration.zero, // ✅ no animation (fast)
-          pageBuilder: (_, __, ___) {
-            return Center(
-              child: Material(
-                color: kwhite,
-                borderRadius: BorderRadius.circular(16),
-                child: LedsFromCall(_incomingNumber, duration, duration, 0),
+          transitionDuration: Duration.zero,
+          pageBuilder: (ctx, __, ___) {
+            return Align(
+              alignment: Alignment.center, // ✅ popup middle मध्ये
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom:
+                      MediaQuery.of(ctx).viewInsets.bottom, // ✅ keyboard adjust
+                  left: 16,
+                  right: 16,
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: 0.9, // ✅ 90% screen width (popup feel)
+                  heightFactor: 0.9, // ✅ 70% screen height
+                  child: Material(
+                    color: kwhite,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: SingleChildScrollView(
+                      child: LedsFromCall(
+                        _incomingNumber,
+                        duration,
+                        duration,
+                        0,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             );
           },
         );
+       
 
         if (!mounted) return;
-
-        // पहिला हलका dialog बंद करून actual heavy widget zero-anim ने
-        // Navigator.of(context, rootNavigator: true).pop();
 
         if (!mounted) return;
 
         await showGeneralDialog(
           context: context,
-          // barrierDismissible: false,
+          barrierDismissible: false,
           barrierLabel: 'Call',
           barrierColor: Colors.black45,
-          transitionDuration: Duration.zero, // ✅ zero-anim
-          pageBuilder: (_, __, ___) {
-            return Center(
-              child: Material(
-                color: kwhite,
-                borderRadius: BorderRadius.circular(16),
-                child: LedsFromCall(_incomingNumber, duration, duration, 0),
+          transitionDuration: Duration.zero,
+          pageBuilder: (ctx, __, ___) {
+            return Align(
+              alignment: Alignment.center, // ✅ popup middle मध्ये
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom:
+                      MediaQuery.of(ctx).viewInsets.bottom, // ✅ keyboard adjust
+                  left: 16,
+                  right: 16,
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: 0.9, 
+                  heightFactor: 0.9, 
+                  child: Material(
+                    color: kwhite,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: SingleChildScrollView(
+                      child: LedsFromCall(
+                        _incomingNumber,
+                        duration,
+                        duration,
+                        0,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             );
           },
@@ -1015,19 +1055,32 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
           barrierDismissible: false,
           barrierLabel: 'Call',
           barrierColor: Colors.black45,
-          transitionDuration: Duration.zero, // low-end devices: fast
-          pageBuilder: (_, __, ___) {
-            return Center(
-              child: Material(
-                color: kwhite,
-                borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
-                  width: 320,
-                  child: LedsFromCall(
-                    _normalize(enteredNumber),
-                    durationSeconds,
-                    formatted,
-                    1,
+          transitionDuration: Duration.zero,
+          pageBuilder: (ctx, __, ___) {
+            return Align(
+              alignment: Alignment.center, // ✅ popup middle मध्ये
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom:
+                      MediaQuery.of(ctx).viewInsets.bottom, // ✅ keyboard adjust
+                  left: 16,
+                  right: 16,
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: 0.9, // ✅ 90% screen width (popup feel)
+                  heightFactor: 0.9, // ✅ 70% screen height
+                  child: Material(
+                    color: kwhite,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: SingleChildScrollView(
+                      child: LedsFromCall(
+                        _normalize(enteredNumber),
+                        durationSeconds,
+                        formatted,
+                        1,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1079,7 +1132,6 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
     }
   }
 
- 
   Future<void> _startCall() async {
     final number = enteredNumber.trim();
     if (number.isNotEmpty) {
@@ -1152,6 +1204,7 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
     // final filteredContacts = contactsState.filteredContacts;
     // print(_callDuration);
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
