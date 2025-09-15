@@ -214,7 +214,7 @@ class _StackDashboardState extends ConsumerState<StackDashboard>
             final resp = await ApiService()
                 .postRequest(getLeadStatus, {"mobile": number})
                 .timeout(const Duration(seconds: 20));
-
+      log("${resp?.data}");
             if (!mounted) return null;
             final message = resp?.data["message"] as String?;
             final leadData = resp?.data['lead'] as Map<String, dynamic>?;
@@ -286,22 +286,43 @@ class _StackDashboardState extends ConsumerState<StackDashboard>
       }
 
       try {
-        await showGeneralDialog(
-          context: context,
-          // barrierDismissible: false,
-          barrierLabel: 'Call',
-          barrierColor: Colors.black45,
-          transitionDuration: Duration.zero, // ✅ no animation (fast)
-          pageBuilder: (_, __, ___) {
-            return Center(
-              child: Material(
-                color: kwhite,
-                borderRadius: BorderRadius.circular(16),
-                child: LedsFromCall(_incomingNumber, duration, duration, 0),
-              ),
-            );
-          },
-        );
+        // await showGeneralDialog(
+        //   context: context,
+        //   barrierDismissible: false,
+        //   barrierLabel: 'Call',
+        //   barrierColor: Colors.black45,
+        //   transitionDuration: Duration.zero,
+        //   pageBuilder: (ctx, __, ___) {
+        //     return Align(
+        //       alignment: Alignment.center, // ✅ popup middle मध्ये
+        //       child: Padding(
+        //         padding: EdgeInsets.only(
+        //           bottom:
+        //               MediaQuery.of(ctx).viewInsets.bottom, // ✅ keyboard adjust
+        //           left: 16,
+        //           right: 16,
+        //         ),
+        //         child: FractionallySizedBox(
+        //           widthFactor: 0.9,
+        //           heightFactor: 0.9,
+        //           child: Material(
+        //             color: kwhite,
+        //             borderRadius: BorderRadius.circular(16),
+        //             clipBehavior: Clip.antiAlias,
+        //             child: SingleChildScrollView(
+        //               child: LedsFromCall(
+        //                 _incomingNumber,
+        //                 duration,
+        //                 duration,
+        //                 0,
+        //               ),
+        //             ),
+        //           ),
+        //         ),
+        //       ),
+        //     );
+        //   },
+        // );
 
         if (!mounted) return;
 
@@ -312,16 +333,37 @@ class _StackDashboardState extends ConsumerState<StackDashboard>
 
         await showGeneralDialog(
           context: context,
-          // barrierDismissible: false,
+          barrierDismissible: false,
           barrierLabel: 'Call',
           barrierColor: Colors.black45,
-          transitionDuration: Duration.zero, // ✅ zero-anim
-          pageBuilder: (_, __, ___) {
-            return Center(
-              child: Material(
-                color: kwhite,
-                borderRadius: BorderRadius.circular(16),
-                child: LedsFromCall(_incomingNumber, duration, duration, 0),
+          transitionDuration: Duration.zero,
+          pageBuilder: (ctx, __, ___) {
+            return Align(
+              alignment: Alignment.center, // ✅ popup middle मध्ये
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom:
+                      MediaQuery.of(ctx).viewInsets.bottom, // ✅ keyboard adjust
+                  left: 16,
+                  right: 16,
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: 0.9,
+                  heightFactor: 0.9,
+                  child: Material(
+                    color: kwhite,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: SingleChildScrollView(
+                      child: LedsFromCall(
+                        _incomingNumber,
+                        duration,
+                        duration,
+                        0,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             );
           },
@@ -333,14 +375,6 @@ class _StackDashboardState extends ConsumerState<StackDashboard>
       }
     });
   }
-
-  // ---- तुझं original method (नको असेल तर काढून टाक) ----
-  // void showCallPopup(BuildContext context, String duration) { ... }
-
-  // ---- Dummy: तुझं actual impl इथे ----
-  // Future<void> fetchDashboardCount(WidgetRef ref) async {
-  //   // your logic
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -1015,19 +1049,32 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
           barrierDismissible: false,
           barrierLabel: 'Call',
           barrierColor: Colors.black45,
-          transitionDuration: Duration.zero, // low-end devices: fast
-          pageBuilder: (_, __, ___) {
-            return Center(
-              child: Material(
-                color: kwhite,
-                borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
-                  width: 320,
-                  child: LedsFromCall(
-                    _normalize(enteredNumber),
-                    durationSeconds,
-                    formatted,
-                    1,
+          transitionDuration: Duration.zero,
+          pageBuilder: (ctx, __, ___) {
+            return Align(
+              alignment: Alignment.center, // ✅ popup middle मध्ये
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom:
+                      MediaQuery.of(ctx).viewInsets.bottom, // ✅ keyboard adjust
+                  left: 16,
+                  right: 16,
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: 0.9,
+                  heightFactor: 0.9,
+                  child: Material(
+                    color: kwhite,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: SingleChildScrollView(
+                      child: LedsFromCall(
+                        _normalize(enteredNumber),
+                        durationSeconds,
+                        formatted,
+                        1,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1079,7 +1126,6 @@ class _DialPadScreenState extends ConsumerState<DialPadScreen> {
     }
   }
 
- 
   Future<void> _startCall() async {
     final number = enteredNumber.trim();
     if (number.isNotEmpty) {

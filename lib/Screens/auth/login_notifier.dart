@@ -17,6 +17,7 @@ import 'package:flutter_application_1/models/leds_model/get_leds_by_model.dart';
 import 'package:flutter_application_1/models/leds_model/get_pending_followups_model.dart';
 import 'package:flutter_application_1/models/leds_model/location_model.dart';
 import 'package:flutter_application_1/models/leds_model/sorce_model.dart';
+import 'package:flutter_application_1/models/products_model.dart';
 import 'package:flutter_application_1/models/task_models/all_members_model.dart';
 import 'package:flutter_application_1/prefs/PreferencesKey.dart';
 import 'package:flutter_application_1/prefs/app_preference.dart';
@@ -82,25 +83,59 @@ class LoginNotifier extends StateNotifier<AsyncValue<void>> {
 final branchProvider = StateProvider<List<BranchModel>>((ref) => []);
 final scorceProvider = StateProvider<List<SourceModel>>((ref) => []);
 final locationProvider = StateProvider<List<LocationModel>>((ref) => []);
-final leadHistoryProvider = StateProvider<List<LeadHistoryManageModel>>(
-  (ref) => [],
-);
+final leadHistoryProvider = StateProvider<List<LeadHistoryManageModel>>((ref) =>[],);
 final myHistoryProvider = StateProvider<List<MyCallHistoryModel>>((ref) => []);
-final getAllLedsProvider = StateProvider<List<GetLedsByHistoryModel>>(
-  (ref) => [],
-);
-final getAllLedsStatusProvider = StateProvider<List<GetLeadStatusUpdateModel>>(
-  (ref) => [],
-);
+final getAllLedsProvider = StateProvider<List<GetLedsByHistoryModel>>((ref) => [],);
+final getAllLedsStatusProvider = StateProvider<List<GetLeadStatusUpdateModel>>((ref) => [],);
 final getPendingFollowUprovider =
     StateProvider<List<GetPendingFollowsByMember>>((ref) => []);
 final getAllLedsUprovider = StateProvider<List<getAllLeadsModel>>((ref) => []);
 final getleadIdUprovider = StateProvider<List<LeadIdTaskModel>>((ref) => []);
+final getLocationUprovider = StateProvider<List<LocationModel>>((ref) => []);
 final getALlMembers = StateProvider<List<GetAllMembersModel>>((ref) => []);
 final getHistoryPerson = StateProvider<List<GetCallHistoryByPersonModel>>(
   (ref) => [],
 );
+final getAllProductsProvider = StateProvider<List<ProductsModel>>(
+  (ref) => [],
+);
 
+Future<void> getAllProductsApi(WidgetRef ref) async {
+  // print("helowwckxckdnkdfn");
+  try {
+    final response = await ApiService().getRequest(getAllProducts);
+    print(response?.data['data']);
+    if (response != null && response.data['status'] == true) {
+      final data = response.data['data']['product'] as List;
+
+      print(data);
+
+      ref.read(getAllProductsProvider.notifier).state =
+          data.map((json) => ProductsModel.fromJson(json)).toList();
+    } else {}
+  } catch (e) {
+    print("Error fetching appointments: $e");
+    throw Exception("Failed to load data");
+  }
+}
+Future<void> getLocation(WidgetRef ref) async {
+  // print("helowwckxckdnkdfn");
+  try {
+    final response = await ApiService().getRequest("${location}");
+    log("----------------------------${response?.data['data']}");
+    if (response != null && response.statusCode == 200) {
+      final data = response.data['data'] as List;
+
+      print(data);
+
+      ref.read(locationProvider.notifier).state =
+          data.map((json) => LocationModel.fromJson(json)).toList();
+    } else {}
+  } catch (e) {
+    print("Error fetching appointments: $e");
+    throw Exception("Failed to load data");
+  }
+}
 Future<void> getLeadIdTaskApi(WidgetRef ref) async {
   // print("helowwckxckdnkdfn");
   try {
@@ -139,6 +174,7 @@ Future<void> getLeadHistoryApi(WidgetRef ref, id) async {
   }
 }
 
+
 Future<void> getAllLocationApi(WidgetRef ref) async {
   // print("helowwckxckdnkdfn");
   try {
@@ -157,6 +193,7 @@ Future<void> getAllLocationApi(WidgetRef ref) async {
     throw Exception("Failed to load data");
   }
 }
+
 
 Future<void> getAllMembersApi(WidgetRef ref) async {
   // print("helowwckxckdnkdfn");

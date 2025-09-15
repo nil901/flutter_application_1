@@ -45,20 +45,25 @@ class CommonDropdown<T> extends StatelessWidget {
         ),
       ),
       value: value,
-      hint: Text(hint, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-      style: const TextStyle(color: Colors.black, fontSize: 14), // Dropdown text size
-      items: items.map(
-        (item) {
-          return DropdownMenuItem(
-            value: item,
-            child: Text(
-              getLabel(item),
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14), // Inside dropdown
-            ),
-          );
-        },
-      ).toList(),
+      hint: Text(
+        hint,
+        style: const TextStyle(color: Colors.grey, fontSize: 14),
+      ),
+      style: const TextStyle(
+        color: Colors.black,
+        fontSize: 14,
+      ), // Dropdown text size
+      items:
+          items.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Text(
+                getLabel(item),
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14), // Inside dropdown
+              ),
+            );
+          }).toList(),
       onChanged: onChanged,
     );
   }

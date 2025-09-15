@@ -294,6 +294,24 @@ class _TotalLeadUpdateFromsScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
+             HintTextCustom(text: "status".tr),
+            CommonDropdown<String>(
+              hint: 'select_status'.tr,
+              value: selectStatus,
+              items: statusIdMap.keys.toList(),
+              getLabel: (value) => value,
+              onChanged: (newValue) {
+                setState(() {
+                  selectStatus = newValue;
+                  statusId = statusIdMap[newValue!];
+                  print('Selected Status ID: $statusId');
+                });
+              },
+              backgroundColor: Colors.white,
+              iconColor: Colors.black,
+              borderRadius: 10,
+              borderColor: Colors.black,
+            ),
             InkWell(
               onTap: () {
                 // final sorceList = ref.read(scorceProvider);
@@ -386,44 +404,6 @@ class _TotalLeadUpdateFromsScreenState
               },
             ),
 
-            HintTextCustom(text: "website".tr),
-            CommonTextField(
-              label: "enter_your_website".tr,
-              controller: websiteController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
-            HintTextCustom(text: "position".tr),
-            CommonTextField(
-              controller: positionController,
-              label: "enter_your_position".tr,
-              // controller: phoneNumberController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.,
-            ),
-            HintTextCustom(text: "industry".tr),
-            CommonTextField(
-              controller: industryController,
-              label: "enter_your_industry".tr,
-              // controller: phoneNumberController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
-            HintTextCustom(text: "fb_profile".tr),
-            CommonTextField(
-              label: "enter_your_fb_profile".tr,
-              controller: fbCampaignController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
-            HintTextCustom(text: "twitter_profile".tr),
-            CommonTextField(
-              label: "enter_your_twitter_profile".tr,
-              controller: twitterProfileController,
-              // controller: phoneNumberController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
             HintTextCustom(text: "state".tr),
             CommonTextField(
               controller: stateController,
@@ -456,34 +436,8 @@ class _TotalLeadUpdateFromsScreenState
               // inputType: TextInputType.phone,
             ),
 
-            HintTextCustom(text: "reference".tr),
-            CommonTextField(
-              label: "enter_your_reference_name".tr,
-              controller: referenceController,
-              // controller: phoneNumberController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
+
             HintTextCustom(text: "branch".tr),
-            // Consumer(
-            //   builder: (context, ref, child) {
-            //     final chapterList = ref.watch(branchProvider);
-
-            //     print("Chapter List Length: ${chapterList.length}");
-
-            //     return CommonDropdown<BranchModel>(
-            //       hint: "Select Branch",
-            //       value: selectedBranch,
-            //       items: chapterList,
-            //       getLabel: (district) => district.name,
-            //       onChanged: (BranchModel? value) {
-            //         setState(() {
-            //           selectedBranch = value;
-            //         });
-            //       },
-            //     );
-            //   },
-            // ),
             Consumer(
               builder: (context, ref, child) {
                 final branchList = ref.watch(branchProvider);
@@ -546,24 +500,7 @@ class _TotalLeadUpdateFromsScreenState
               borderRadius: 10,
               borderColor: Colors.black,
             ),
-            HintTextCustom(text: "status".tr),
-            CommonDropdown<String>(
-              hint: 'select_status'.tr,
-              value: selectStatus,
-              items: statusIdMap.keys.toList(),
-              getLabel: (value) => value,
-              onChanged: (newValue) {
-                setState(() {
-                  selectStatus = newValue;
-                  statusId = statusIdMap[newValue!];
-                  print('Selected Status ID: $statusId');
-                });
-              },
-              backgroundColor: Colors.white,
-              iconColor: Colors.black,
-              borderRadius: 10,
-              borderColor: Colors.black,
-            ),
+           
             HintTextCustom(text: "conversation_status".tr),
             CommonDropdown<String>(
               hint: 'select_conversation_status'.tr,

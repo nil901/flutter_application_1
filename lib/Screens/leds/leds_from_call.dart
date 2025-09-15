@@ -12,6 +12,7 @@ import 'package:flutter_application_1/global/utils.dart';
 import 'package:flutter_application_1/models/leds_model/branch_model.dart';
 import 'package:flutter_application_1/models/leds_model/location_model.dart';
 import 'package:flutter_application_1/models/leds_model/sorce_model.dart';
+import 'package:flutter_application_1/models/products_model.dart';
 import 'package:flutter_application_1/prefs/PreferencesKey.dart';
 import 'package:flutter_application_1/prefs/app_preference.dart';
 import 'package:flutter_application_1/utils/comman_dropdown.dart';
@@ -43,6 +44,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
   BranchModel? selectedBranch;
   SourceModel? selectedSorce;
   LocationModel? selectedLocation;
+  ProductsModel? selectedProduct;
   String? selectedPriroty;
   int? priorityId;
   String? selectConversionStatus;
@@ -75,6 +77,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
   bool isSourceSet = false;
   bool isBranchSet = false;
   bool isLocationSet = false;
+  bool isProductSet = false;
   Map<String, String> remarkOptions = {
     '1RK': '1RK',
     '2BHK': '2BHK',
@@ -89,6 +92,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
     scorceApi(ref);
     branchApi(ref);
     getAllLocationApi(ref);
+    getAllProductsApi(ref);
     super.initState();
   }
 
@@ -141,6 +145,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
       selectedBranch = null;
       selectedSorce = null;
       selectedLocation = null;
+      selectedProduct = null;
       selectStatus = null;
       statusId = null;
       selectedPriroty = null;
@@ -200,6 +205,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
       selectedBranch = null;
       selectedSorce = null;
       selectedLocation = null;
+      selectedProduct = null;
       selectStatus = null;
       statusId = null;
       selectedPriroty = null;
@@ -230,6 +236,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
       selectedBranch = null;
       selectedSorce = null;
       selectedLocation = null;
+      selectedProduct = null;
       selectStatus = null;
       statusId = null;
       selectedPriroty = null;
@@ -515,24 +522,77 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
                 },
               ),
 
+            // if (statusId != 3 && statusId != 5)
+            //   HintTextCustom(text: "remark".tr),
+            // if (statusId != 3 && statusId != 5)
+            //   CommonDropdown<String>(
+            //     hint: 'select_remark'.tr,
+            //     value: selectedRemark,
+            //     items: remarkOptions.keys.toList(),
+            //     getLabel: (value) => value,
+            //     onChanged: (newValue) {
+            //       setState(() {
+            //         selectedRemark = newValue;
+            //       });
+            //     },
+            //     backgroundColor: Colors.white,
+            //     iconColor: Colors.black,
+            //     borderRadius: 10,
+            //     borderColor: Colors.black,
+            //   ),
             if (statusId != 3 && statusId != 5)
               HintTextCustom(text: "remark".tr),
             if (statusId != 3 && statusId != 5)
-              CommonDropdown<String>(
-                hint: 'select_remark'.tr,
-                value: selectedRemark,
-                items: remarkOptions.keys.toList(),
-                getLabel: (value) => value,
-                onChanged: (newValue) {
-                  setState(() {
-                    selectedRemark = newValue;
-                  });
+              Consumer(
+                builder: (context, ref, child) {
+                  final productList = ref.watch(getAllProductsProvider);
+
+                  // preselect फक्त एकदाच run व्हावं
+                  if (!isProductSet &&
+                      leadList.isNotEmpty &&
+                      leadList[0].flatType != null &&
+                      leadList[0].flatType.toString().trim().isNotEmpty &&
+                      productList.isNotEmpty) {
+                    final sourceFromData =
+                        leadList[0].flatType.toString().trim();
+
+                    // flatType (string) vs product.name match
+                    final match = productList.firstWhere(
+                      (element) => element.name.trim() == sourceFromData,
+                      orElse:
+                          () => ProductsModel(id: '', name: '', productId: 0),
+                    );
+
+                    print("Matched Source: ${match.name}");
+
+                    if (match.id.isNotEmpty) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            selectedProduct = match;
+                            isProductSet = true;
+                          });
+                        }
+                      });
+                    }
+                  }
+                  return CommonDropdown<ProductsModel>(
+                    hint: "remark",
+                    value: selectedProduct,
+                    items: productList,
+                    getLabel: (item) => item.name,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          selectedProduct = value;
+                        });
+                        print("Selected Product: ${selectedProduct?.name}");
+                      }
+                    },
+                  );
                 },
-                backgroundColor: Colors.white,
-                iconColor: Colors.black,
-                borderRadius: 10,
-                borderColor: Colors.black,
               ),
+
             if (statusId != 3 && statusId != 5)
               HintTextCustom(text: "metting_decprtion".tr),
             if (statusId != 3 && statusId != 5)
@@ -650,6 +710,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
                         setState(() {
                           selectedLocation = value;
                         });
+                        print("sdsd${selectedLocation?.name}");
                       }
                     },
                   );
@@ -741,9 +802,9 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
                   "description": "Nothing",
                   "fbCampaignName": fbCampaignController.text,
                   "isDeleted": false,
-                "remark": meetingDescController.text,
+                  "remark": meetingDescController.text,
                   "estimatedBudget": estimatedBudgetController.text,
-                  "flatType": selectedRemark,
+                  "flatType": selectedProduct?.name,
                   "location": selectedLocation?.name,
                   // "isStatusUpdated": isUpdated,
                 };
@@ -784,7 +845,7 @@ class _LedsFromCallState extends ConsumerState<LedsFromCall> {
                     "fbCampaignName": fbCampaignController.text,
                     "isDeleted": false,
                     "estimatedBudget": estimatedBudgetController.text,
-                    "flatType": selectedRemark,
+                    "flatType": selectedProduct?.name,
                     "location": selectedLocation?.name,
                   };
 

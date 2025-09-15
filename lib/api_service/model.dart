@@ -13,9 +13,17 @@ class LeaderBoardResponse {
 
   factory LeaderBoardResponse.fromJson(Map<String, dynamic> json) {
     return LeaderBoardResponse(
-      data: List<UserData>.from(json['result']['data'].map((x) => UserData.fromJson(x))),
-      custData: List<UserData>.from(json['result']['cust_data'].map((x) => UserData.fromJson(x))),
-      leaderboardPrices: List<LeaderboardPrice>.from(json['result']['leaderboard_prices'].map((x) => LeaderboardPrice.fromJson(x))),
+      data: List<UserData>.from(
+        json['result']['data'].map((x) => UserData.fromJson(x)),
+      ),
+      custData: List<UserData>.from(
+        json['result']['cust_data'].map((x) => UserData.fromJson(x)),
+      ),
+      leaderboardPrices: List<LeaderboardPrice>.from(
+        json['result']['leaderboard_prices'].map(
+          (x) => LeaderboardPrice.fromJson(x),
+        ),
+      ),
       message: json['message'],
     );
   }

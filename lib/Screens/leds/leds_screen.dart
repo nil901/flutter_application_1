@@ -7,7 +7,9 @@ import 'package:flutter_application_1/api_service/urls.dart';
 import 'package:flutter_application_1/color/colors.dart';
 import 'package:flutter_application_1/global/utils.dart';
 import 'package:flutter_application_1/models/leds_model/branch_model.dart';
+import 'package:flutter_application_1/models/leds_model/location_model.dart';
 import 'package:flutter_application_1/models/leds_model/sorce_model.dart';
+import 'package:flutter_application_1/models/products_model.dart';
 import 'package:flutter_application_1/prefs/PreferencesKey.dart';
 import 'package:flutter_application_1/prefs/app_preference.dart';
 import 'package:flutter_application_1/utils/comman_app_bar.dart';
@@ -34,10 +36,14 @@ class _AddLeadPageState extends ConsumerState<AddLeadPage> {
   int? conversionStatusId;
   String? selectStatus;
   String? materialType;
+  ProductsModel? selectedProduct;
+  LocationModel? selectedLocation;
   @override
   void initState() {
     scorceApi(ref);
     branchApi(ref);
+    getAllLocationApi(ref);
+    getAllProductsApi(ref);
     // TODO: implement initState
     super.initState();
   }
@@ -64,6 +70,7 @@ class _AddLeadPageState extends ConsumerState<AddLeadPage> {
   final TextEditingController estimatedBudgetController =
       TextEditingController();
   bool _isLoading = false;
+  bool isProductSet = false;
   @override
   void dispose() {
     nameController.dispose();
@@ -116,6 +123,172 @@ class _AddLeadPageState extends ConsumerState<AddLeadPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
+            HintTextCustom(text: "status".tr),
+            CommonDropdown<String>(
+              hint: 'status'.tr,
+              value: selectStatus,
+              items: statusIdMap.keys.toList(),
+              getLabel: (value) => value,
+              onChanged: (newValue) {
+                setState(() {
+                  selectStatus = newValue;
+                  statusId = statusIdMap[newValue!];
+                  print('Selected Status ID: $statusId');
+                });
+              },
+              backgroundColor: Colors.white,
+              iconColor: Colors.black,
+              borderRadius: 10,
+              borderColor: Colors.black,
+            ),
+            HintTextCustom(text: "prority".tr),
+            CommonDropdown<String>(
+              hint: 'select_prority'.tr,
+              value: selectedPriroty,
+              items: statusPriorityMap.keys.toList(),
+              getLabel: (value) => value,
+              onChanged: (newValue) {
+                setState(() {
+                  selectedPriroty = newValue;
+                  // selectStatus = newValue;
+                  priorityId = statusPriorityMap[newValue!];
+                  print('Selected Priority ID: $priorityId');
+                });
+              },
+              backgroundColor: Colors.white,
+              iconColor: Colors.black,
+              borderRadius: 10,
+              borderColor: Colors.black,
+            ),
+            HintTextCustom(text: "meeting_date".tr),
+            CommonTextField(
+              controller: meetingTimeController,
+              label: "meeting_date".tr,
+              inputType: TextInputType.none,
+              readOnly: true,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+
+                if (pickedDate != null) {
+                  // Current time for time part (this is used to keep the time when date is selected)
+                  final now = DateTime.now();
+                  final fullDateTime = DateTime(
+                    pickedDate.year,
+                    pickedDate.month,
+                    pickedDate.day,
+                    now.hour,
+                    now.minute,
+                    now.second,
+                    now.millisecond,
+                  );
+
+                  // Format for frontend: MM/dd/yyyy
+                  final formattedDateForDisplay = DateFormat(
+                    "MM/dd/yyyy",
+                  ).format(fullDateTime);
+
+                  // Format for backend: ISO 8601 format
+                  final formattedDateForBackend = DateFormat(
+                    "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+                  ).format(fullDateTime.toUtc());
+
+                  // Set text for display (user will see MM/dd/yyyy)
+                  meetingTimeController.text = formattedDateForDisplay;
+                  setState(() {
+                    globalFormattedMeetingDate = formattedDateForBackend;
+                  });
+                  // Print formatted date for backend
+                  print(
+                    "Backend Date: $formattedDateForBackend",
+                  ); // This is for your debug, or you can send this to backend
+                }
+              },
+            ),
+            HintTextCustom(text: "meeting_time".tr),
+            CommonTextField(
+              controller: meetingDateController,
+              label: "meeting_time".tr,
+              onTap: () async {
+                TimeOfDay? pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (pickedTime != null) {
+                  final now = DateTime.now();
+                  selectedDateTime = DateTime(
+                    now.year,
+                    now.month,
+                    now.day,
+                    pickedTime.hour,
+                    pickedTime.minute,
+                  );
+                  final formattedTime = DateFormat.jm().format(
+                    selectedDateTime!,
+                  ); // "08:50 AM"
+                  meetingDateController.text = formattedTime;
+                  final isoTime = selectedDateTime?.toIso8601String();
+                  print(selectedDateTime);
+                }
+              },
+              readOnly: true,
+              inputType: TextInputType.none,
+            ),
+            HintTextCustom(text: "metting_decprtion".tr),
+            CommonTextField(
+              controller: meetingDescController,
+              label: "metting_decprtion".tr,
+              // controller: phoneNumberController,
+              // icon: Icons.phone,
+              // inputType: TextInputType.phone,
+            ),
+
+            // Consumer(
+            //   builder: (context, ref, child) {
+            //     final productList = ref.watch(getAllProductsProvider);
+            //     print("Chapter List Length: ${productList.length}");
+
+            //     return CommonDropdown<ProductsModel>(
+            //       hint: "select_branch".tr,
+            //       value: selectedProduct,
+            //       items: productList,
+            //       getLabel: (district) => district.name,
+            //       onChanged: (ProductsModel? value) {
+            //         setState(() {
+            //           selectedProduct = value;
+            //         });
+            //       },
+            //     );
+            //   },
+            // ),
+            if (statusId != 3 && statusId != 5)
+              HintTextCustom(text: "remark".tr),
+            if (statusId != 3 && statusId != 5)
+              Consumer(
+                builder: (context, ref, child) {
+                  final productList = ref.watch(getAllProductsProvider);
+
+                  return CommonDropdown<ProductsModel>(
+                    hint: "remark",
+                    value: selectedProduct,
+                    items: productList,
+                    getLabel: (item) => item.name,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          selectedProduct = value;
+                        });
+                        print("Selected Product: ${selectedProduct?.name}");
+                      }
+                    },
+                  );
+                },
+              ),
+
             HintTextCustom(text: "name".tr),
 
             CommonTextField(
@@ -145,7 +318,7 @@ class _AddLeadPageState extends ConsumerState<AddLeadPage> {
               builder: (context, ref, child) {
                 final sorce = ref.watch(scorceProvider);
 
-                print("Chapter List Length: ${sorce.length}"); // <<< DEBUG
+                print("Chapter List Length: ${sorce.length}");
 
                 return CommonDropdown<SourceModel>(
                   hint: "select_source".tr,
@@ -160,51 +333,38 @@ class _AddLeadPageState extends ConsumerState<AddLeadPage> {
                 );
               },
             ),
-            HintTextCustom(text: "website".tr),
-            CommonTextField(
-              label: "enter_your_website".tr,
-              controller: websiteController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
-            HintTextCustom(text: "position".tr),
-            CommonTextField(
-              controller: positionController,
-              label: "position".tr,
-              // controller: phoneNumberController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.,
-            ),
-            HintTextCustom(text: "industry".tr),
-            CommonTextField(
-              controller: industryController,
-              label: "industry".tr,
-              // controller: phoneNumberController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
-            HintTextCustom(text: "fb_profile".tr),
-            CommonTextField(
-              label: "enter_your_fb_profile".tr,
-              controller: fbProfileController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
-            HintTextCustom(text: "twitter_profile".tr),
-            CommonTextField(
-              label: "twitter_profile".tr,
-              controller: twitterProfileController,
-              // controller: phoneNumberController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
-            HintTextCustom(text: "state".tr),
-            CommonTextField(
-              controller: stateController,
-              label: "enter_state".tr,
 
-              // inputType: TextInputType.phone,
+            HintTextCustom(text: "location".tr),
+
+            Consumer(
+              builder: (context, ref, child) {
+                final locationList = ref.watch(locationProvider);
+
+                return CommonDropdown<LocationModel>(
+                  hint: "select_location".tr,
+                  value: selectedLocation,
+                  items: locationList,
+                  getLabel: (item) => item.name,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        selectedLocation = value;
+                      });
+                      print("sdsd${selectedLocation?.name}");
+                    }
+                  },
+                );
+              },
             ),
+
+            // HintTextCustom(text: "position".tr),
+            // CommonTextField(
+            //   controller: positionController,
+            //   label: "position".tr,
+            //   // controller: phoneNumberController,
+            //   // icon: Icons.phone,
+            //   // inputType: TextInputType.,
+            // ),
             HintTextCustom(text: "city".tr),
             CommonTextField(
               controller: cityController,
@@ -258,43 +418,7 @@ class _AddLeadPageState extends ConsumerState<AddLeadPage> {
                 );
               },
             ),
-            HintTextCustom(text: "prority".tr),
-            CommonDropdown<String>(
-              hint: 'select_prority'.tr,
-              value: selectedPriroty,
-              items: statusPriorityMap.keys.toList(),
-              getLabel: (value) => value,
-              onChanged: (newValue) {
-                setState(() {
-                  selectedPriroty = newValue;
-                  // selectStatus = newValue;
-                  priorityId = statusPriorityMap[newValue!];
-                  print('Selected Priority ID: $priorityId');
-                });
-              },
-              backgroundColor: Colors.white,
-              iconColor: Colors.black,
-              borderRadius: 10,
-              borderColor: Colors.black,
-            ),
-            HintTextCustom(text: "status".tr),
-            CommonDropdown<String>(
-              hint: 'status'.tr,
-              value: selectStatus,
-              items: statusIdMap.keys.toList(),
-              getLabel: (value) => value,
-              onChanged: (newValue) {
-                setState(() {
-                  selectStatus = newValue;
-                  statusId = statusIdMap[newValue!];
-                  print('Selected Status ID: $statusId');
-                });
-              },
-              backgroundColor: Colors.white,
-              iconColor: Colors.black,
-              borderRadius: 10,
-              borderColor: Colors.black,
-            ),
+
             HintTextCustom(text: "conversation_status".tr),
             CommonDropdown<String>(
               hint: 'conversation_status'.tr,
@@ -313,94 +437,7 @@ class _AddLeadPageState extends ConsumerState<AddLeadPage> {
               borderRadius: 10,
               borderColor: Colors.black,
             ),
-            HintTextCustom(text: "meeting_time".tr),
-            CommonTextField(
-              controller: meetingDateController,
-              label: "meeting_time".tr,
-              onTap: () async {
-                TimeOfDay? pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-                if (pickedTime != null) {
-                  final now = DateTime.now();
-                  selectedDateTime = DateTime(
-                    now.year,
-                    now.month,
-                    now.day,
-                    pickedTime.hour,
-                    pickedTime.minute,
-                  );
-                  final formattedTime = DateFormat.jm().format(
-                    selectedDateTime!,
-                  ); // "08:50 AM"
-                  meetingDateController.text = formattedTime;
-                  final isoTime = selectedDateTime?.toIso8601String();
-                  print(selectedDateTime);
-                }
-              },
-              readOnly: true,
-              inputType: TextInputType.none,
-            ),
 
-            HintTextCustom(text: "meeting_date".tr),
-            CommonTextField(
-              controller: meetingTimeController,
-              label: "meeting_date".tr,
-              inputType: TextInputType.none,
-              readOnly: true,
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-
-                if (pickedDate != null) {
-                  // Current time for time part (this is used to keep the time when date is selected)
-                  final now = DateTime.now();
-                  final fullDateTime = DateTime(
-                    pickedDate.year,
-                    pickedDate.month,
-                    pickedDate.day,
-                    now.hour,
-                    now.minute,
-                    now.second,
-                    now.millisecond,
-                  );
-
-                  // Format for frontend: MM/dd/yyyy
-                  final formattedDateForDisplay = DateFormat(
-                    "MM/dd/yyyy",
-                  ).format(fullDateTime);
-
-                  // Format for backend: ISO 8601 format
-                  final formattedDateForBackend = DateFormat(
-                    "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-                  ).format(fullDateTime.toUtc());
-
-                  // Set text for display (user will see MM/dd/yyyy)
-                  meetingTimeController.text = formattedDateForDisplay;
-                  setState(() {
-                    globalFormattedMeetingDate = formattedDateForBackend;
-                  });
-                  // Print formatted date for backend
-                  print(
-                    "Backend Date: $formattedDateForBackend",
-                  ); // This is for your debug, or you can send this to backend
-                }
-              },
-            ),
-
-            HintTextCustom(text: "metting_decprtion".tr),
-            CommonTextField(
-              controller: meetingDescController,
-              label: "metting_decprtion".tr,
-              // controller: phoneNumberController,
-              // icon: Icons.phone,
-              // inputType: TextInputType.phone,
-            ),
             HintTextCustom(text: "fb_compaingn_name".tr),
             CommonTextField(
               controller: fbCampaignController,
@@ -490,7 +527,9 @@ class _AddLeadPageState extends ConsumerState<AddLeadPage> {
                   "description": "Nothing",
                   "fbCampaignName": fbCampaignController.text,
                   "isDeleted": false,
+                  "flatType": selectedProduct?.name,
                   "estimatedBudget": estimatedBudgetController.text,
+                  "location": selectedLocation?.name,
                 };
                 log("${data}");
                 try {

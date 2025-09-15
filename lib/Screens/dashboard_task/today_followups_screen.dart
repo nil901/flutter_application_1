@@ -727,13 +727,13 @@ class LeadCard extends ConsumerWidget {
     if (priority == null) return "Unknown";
     switch (priority) {
       case 0:
-        return "Lower";
+        return "Warm";
       case 1:
-        return "Mid";
+        return "Hot";
       case 2:
-        return "Important";
-      case 3:
-        return "High Priority and Urgent";
+        return "Cold";
+      // case 3:
+      //   return "High Priority and Urgent";
       default:
         return "Unknown";
     }

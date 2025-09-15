@@ -24,7 +24,7 @@ import 'package:intl/intl.dart';
 
 class AddTask extends ConsumerStatefulWidget {
   const AddTask({super.key});
-  
+
   // final GetPendingFollowsByMember data;
 
   @override
@@ -81,16 +81,14 @@ class _AddTaskState extends ConsumerState<AddTask> {
     'Call-not-Received': 5,
   };
 
-  void init(){
-    
-  }
+  void init() {}
   bool isActive = false;
   Map<String, int> conversionStatusMap = {'Open': 0, 'Won': 1, 'Lost': 2};
   String? globalFormattedMeetingDate;
   @override
   Widget build(BuildContext context) {
-     final chapterList = ref.watch(getAllLedsUprovider);
-     print(chapterList.length);
+    final chapterList = ref.watch(getAllLedsUprovider);
+    print(chapterList.length);
     String contactDate = DateTime.now().toUtc().toIso8601String();
     print(contactDate); // Ex: 2025-04-29T09:15:30.123Z
     return Scaffold(
@@ -104,7 +102,6 @@ class _AddTaskState extends ConsumerState<AddTask> {
             InkWell(
               onTap: () {
                 getAllMembersApi(ref);
-              
               },
               child: HintTextCustom(text: "add_title".tr),
             ),
@@ -123,7 +120,7 @@ class _AddTaskState extends ConsumerState<AddTask> {
             Consumer(
               builder: (context, ref, child) {
                 final chapterList = ref.watch(getleadIdUprovider);
-  
+
                 print("Chapter List Length: ${chapterList.length}");
 
                 return CommonDropdown<LeadIdTaskModel>(
@@ -317,23 +314,23 @@ class _AddTaskState extends ConsumerState<AddTask> {
 
             InkWell(
               onTap: () async {
-                if(nameController.text.isEmpty) {
+                if (nameController.text.isEmpty) {
                   Utils().showToastMessage("Please enter name");
                   return;
                 }
-                if(startDateController.text.isEmpty) {
+                if (startDateController.text.isEmpty) {
                   Utils().showToastMessage("Please select start date");
                   return;
-                } 
-                if(endDateController.text.isEmpty) {
+                }
+                if (endDateController.text.isEmpty) {
                   Utils().showToastMessage("Please select end date");
                   return;
                 }
-                if(assignedTo == null) {
+                if (assignedTo == null) {
                   Utils().showToastMessage("Please select assigned to");
                   return;
                 }
-                if(taskObserver == null) {
+                if (taskObserver == null) {
                   Utils().showToastMessage("Please select task observer");
                   return;
                 }
@@ -341,11 +338,11 @@ class _AddTaskState extends ConsumerState<AddTask> {
                 //   Utils().showToastMessage("Please select lead");
                 //   return;
                 // }
-                if(priorityId == null) {
+                if (priorityId == null) {
                   Utils().showToastMessage("Please select priority");
                   return;
                 }
-                if(meetingDescController.text.isEmpty) {
+                if (meetingDescController.text.isEmpty) {
                   Utils().showToastMessage("Please enter description");
                   return;
                 }
@@ -358,19 +355,20 @@ class _AddTaskState extends ConsumerState<AddTask> {
                   setState(() {
                     _isLoading = true;
                   });
-                  final response = await ApiService()
-                      .postRequest(createTask, {
-                        "title": nameController.text,
-                      //  "userId": AppPreference().getInt(PreferencesKey.member_Id),
-                        "startDate": startDateController.text,
-                        "endDate": endDateController.text,
-                        "assignedTo": "${AppPreference().getInt(PreferencesKey.member_Id)}",
-                        "observer": "${AppPreference().getInt(PreferencesKey.member_Id)}",
-                        "priority": priorityId,
-                        "leadId": selectedLead?.leadId,
-                        "description": meetingDescController.text,
-                        "isActive": isActive,
-                      });
+                  final response = await ApiService().postRequest(createTask, {
+                    "title": nameController.text,
+                    //  "userId": AppPreference().getInt(PreferencesKey.member_Id),
+                    "startDate": startDateController.text,
+                    "endDate": endDateController.text,
+                    "assignedTo":
+                        "${AppPreference().getInt(PreferencesKey.member_Id)}",
+                    "observer":
+                        "${AppPreference().getInt(PreferencesKey.member_Id)}",
+                    "priority": priorityId,
+                    "leadId": selectedLead?.leadId,
+                    "description": meetingDescController.text,
+                    "isActive": isActive,
+                  });
 
                   print("statusCode: ${response?.statusCode}");
                   print("status: ${response?.data['status']}");
@@ -415,21 +413,24 @@ class _AddTaskState extends ConsumerState<AddTask> {
                   // );
                 }
               },
-              child:  Container(
+              child: Container(
                 height: 45,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: kOrange,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child:_isLoading ?CircularProgressIndicator() :Text(
-                  "Submit",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: kwhite,
-                  ),
-                ),
+                child:
+                    _isLoading
+                        ? CircularProgressIndicator()
+                        : Text(
+                          "Submit",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: kwhite,
+                          ),
+                        ),
               ),
             ),
             SizedBox(height: 10),

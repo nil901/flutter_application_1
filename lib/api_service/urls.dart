@@ -20,8 +20,11 @@ String get getAllBranch => '${baseUrl}branch/getAllBranch?page=1';
 String get getAllLeds => '${baseUrl}lead/getLeads';
 String get getAllMembers => '${baseUrl}team/getAllMembers';
 String get getAllLocation => '${baseUrl}location/getAllLocations';
+String get getAllProducts => '${baseUrl}product/getAllProducts';
 String get getleadHistory => '${baseUrl}lead/getLeadHistoryByLeadId';
 String get getleadIdTask => '${baseUrl}lead/getLeadListForTask';
+String get location => '${baseUrl}location/getAllLocations?page=1';
+
 String get createTask => '${baseUrl}task/createTask';
 String get deleteTask => '${baseUrl}task/deleteTask/';
 String get leadUpadteStatus => '${baseUrl}lead/updateLeadStatusAndMeetingDate/';
