@@ -1,8 +1,8 @@
 import 'package:flutter_application_1/prefs/PreferencesKey.dart';
 import 'package:flutter_application_1/prefs/app_preference.dart';
 
-String baseUrl = 'https://api.newpawanputradevelopers.com/api/';
-// String baseUrl = 'https://realestate-crm-backend-b3op.onrender.com/api/';
+// String baseUrl = 'https://skcrmapi.diginetsolution.com/api/';
+String baseUrl = 'https://realestate-crm-backend-b3op.onrender.com/api/';
 
 // https://realestate-crm-backend-b3op.onrender.com/
 

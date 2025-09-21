@@ -88,7 +88,7 @@ class _RippleSplashScreenState extends State<RippleSplashScreen>
             ),
             SizedBox(height: 40),
             Text(
-              'Pawanputra',
+              'Diginet Solution',
               style: TextStyle(
                 fontSize: 34,
                 fontWeight: FontWeight.w900,
@@ -97,14 +97,14 @@ class _RippleSplashScreenState extends State<RippleSplashScreen>
               ),
             ),
             SizedBox(height: 10),
-            Text(
-              'developer',
-              style: TextStyle(
-                fontSize: 16,
-                color: kOrange.withOpacity(0.8),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
+            // Text(
+            //   'developer',
+            //   style: TextStyle(
+            //     fontSize: 16,
+            //     color: kOrange.withOpacity(0.8),
+            //     fontStyle: FontStyle.italic,
+            //   ),
+            // ),
           ],
         ),
       ),

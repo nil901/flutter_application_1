@@ -72,7 +72,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Text('', style: TextStyle(color: kOrange, fontSize: 16)),
                     const SizedBox(height: 10),
                     Text(
-                      'Pawanputra App',
+                      'Diginet Solution',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
